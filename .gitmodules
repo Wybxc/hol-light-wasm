@@ -1,3 +1,0 @@
-[submodule "wasocaml"]
-	path = wasocaml
-	url = https://github.com/OCamlPro/wasocaml.git
