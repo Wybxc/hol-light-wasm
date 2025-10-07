@@ -1,0 +1,6 @@
+*.wasm
+*.byte
+*.cmi
+*.cmo
+/*.js
+/*.wat
