@@ -70,9 +70,34 @@ impl Z {
     }
 }
 
-fn int(mut store: impl AsContextMut, x: i32) -> Result<Rooted<EqRef>> {
+fn from_int(mut store: impl AsContextMut, x: i32) -> Result<Rooted<EqRef>> {
     let i31 = I31::new_i32(x).expect("i31");
     AnyRef::from_i31(&mut store, i31).unwrap_eqref(&mut store)
+}
+
+fn to_string(mut store: impl AsContextMut, s: &EqRef) -> Result<String> {
+    let s = s
+        .as_array(&store)?
+        .expect("array")
+        .elems(&mut store)?
+        .map(|elem| {
+            elem.i32()
+                .map(|i| i as u8)
+                .ok_or_else(|| anyhow::anyhow!("expected i32"))
+        })
+        .collect::<Result<Vec<_>>>()?;
+    Ok(String::from_utf8(s)?)
+}
+
+fn from_string(mut store: impl AsContextMut, s: &str) -> Result<Rooted<EqRef>> {
+    let s = s.bytes().map(|b| Val::I32(b as i32)).collect::<Vec<_>>();
+    let array_ty = ArrayType::new(
+        store.as_context().engine(),
+        FieldType::new(Mutability::Const, ValType::I32.into()),
+    );
+    let allocator = ArrayRefPre::new(&mut store, array_ty);
+    let array = ArrayRef::new_fixed(&mut store, &allocator, &s)?;
+    Ok(array.to_eqref())
 }
 
 /// ```ocaml
@@ -81,17 +106,96 @@ fn int(mut store: impl AsContextMut, x: i32) -> Result<Rooted<EqRef>> {
 fn z_sign<T>(mut caller: Caller<T>, x: Rooted<EqRef>) -> Result<Rooted<EqRef>> {
     let x = Z::from_wasm(&mut caller, &x)?;
     let s = x.into_inner().signum().to_i32().unwrap();
-    int(caller, s)
+    from_int(caller, s)
 }
+
+/*external format: string -> t -> string = "ml_z_format"
+(** Gives a string representation of the argument in the specified
+   printf-like format.
+   The general specification has the following form:
+
+   [% \[flags\] \[width\] type]
+
+   Where the type actually indicates the base:
+
+   - [i], [d], [u]: decimal
+   - [b]: binary
+   - [o]: octal
+   - [x]: lowercase hexadecimal
+   - [X]: uppercase hexadecimal
+
+   Supported flags are:
+
+   - [+]: prefix positive numbers with a [+] sign
+   - space: prefix positive numbers with a space
+   - [-]: left-justify (default is right justification)
+   - [0]: pad with zeroes (instead of spaces)
+   - [#]: alternate formatting (actually, simply output a literal-like prefix: [0x], [0b], [0o])
+
+   Unlike the classic [printf], all numbers are signed (even hexadecimal ones),
+   there is no precision field, and characters that are not part of the format
+   are simply ignored (and not copied in the output).
+*)
+
+  let base = 10;
+  let cas = 0;
+  let width = 0;
+  let alt = 0;
+  let dir = 0;
+  let sign = '';
+  let pad = ' ';
+  let idx = 0;
+  let prefix = "";
+  while (fmt[idx] == '%') idx++;
+  for (; ; idx++) {
+    if (fmt[idx] == '#') alt = 1;
+    else if (fmt[idx] == '0') pad = '0';
+    else if (fmt[idx] == '-') dir = 1;
+    else if (fmt[idx] == ' ' || fmt[idx] == '+') sign = fmt[idx];
+    else break;
+  }
+  if (z1n < 0) { sign = '-'; z1n = -z1n }
+  for (; fmt[idx] >= '0' && fmt[idx] <= '9'; idx++)
+    width = 10 * width + (+fmt[idx]);
+  switch (fmt[idx]) {
+    case 'i': case 'd': case 'u': break;
+    case 'b': base = 2; if (alt) prefix = "0b"; break;
+    case 'o': base = 8; if (alt) prefix = "0o"; break;
+    case 'x': base = 16; if (alt) prefix = "0x"; break;
+    case 'X': base = 16; if (alt) prefix = "0X"; cas = 1; break;
+    default:
+      caml_failwith("Unsupported format '" + fmt + "'");
+  }
+  if (dir) pad = ' ';
+  let res = z1n.toString(base);
+  if (cas === 1) {
+    res = res.toUpperCase();
+  }
+  let size = res.length;
+  if (pad == ' ') {
+    if (dir) {
+      res = sign + prefix + res;
+      for (; res.length < width;) res = res + pad;
+    } else {
+      res = sign + prefix + res;
+      for (; res.length < width;) res = pad + res;
+    }
+  } else {
+    let pre = sign + prefix;
+    for (; res.length + pre.length < width;) res = pad + res;
+    res = pre + res;
+  }
+
+*/
 
 /// ```ocaml
 /// val format : string -> Z -> string
 /// ```
-fn z_format<T>(caller: Caller<T>, x: Rooted<EqRef>, y: Rooted<EqRef>) -> Result<Rooted<EqRef>> {
-    let ty_x = x.ty(&caller)?;
-    let ty_y = y.ty(&caller)?;
-    println!("format: {ty_x}, {ty_y}");
-    todo!()
+fn z_format<T>(mut caller: Caller<T>, s: Rooted<EqRef>, x: Rooted<EqRef>) -> Result<Rooted<EqRef>> {
+    let s = to_string(&mut caller, &s)?;
+    let x = Z::from_wasm(&mut caller, &x)?;
+    println!("formatting {:?} with {:?}", x, s);
+    from_string(&mut caller, "")
 }
 
 /// ```ocaml
@@ -101,7 +205,7 @@ fn z_equal<T>(mut caller: Caller<T>, x: Rooted<EqRef>, y: Rooted<EqRef>) -> Resu
     let x = Z::from_wasm(&mut caller, &x)?;
     let y = Z::from_wasm(&mut caller, &y)?;
     let result = x.inner().eq(y.inner());
-    int(&mut caller, result as i32)
+    from_int(&mut caller, result as i32)
 }
 
 /// ```ocaml
@@ -193,7 +297,7 @@ fn z_compare<T>(
     let x = Z::from_wasm(&mut caller, &x)?;
     let y = Z::from_wasm(&mut caller, &y)?;
     let result = x.inner().cmp(y.inner());
-    int(&mut caller, result as i32)
+    from_int(&mut caller, result as i32)
 }
 
 /// ```ocaml
@@ -224,7 +328,7 @@ fn z_to_int<T>(mut caller: Caller<T>, x: Rooted<EqRef>) -> Result<Rooted<EqRef>>
         .inner()
         .to_i32()
         .ok_or_else(|| anyhow::anyhow!("overflow"))?;
-    int(&mut caller, result)
+    from_int(&mut caller, result)
 }
 
 /// ```ocaml
@@ -266,7 +370,7 @@ fn z_mul_overflows<T>(
     let x = x.as_i31(&caller)?.unwrap().get_i32();
     let y = y.as_i31(&caller)?.unwrap().get_i32();
     let (_result, overflowed) = x.overflowing_mul(y);
-    int(&mut caller, overflowed as i32)
+    from_int(&mut caller, overflowed as i32)
 }
 
 /// ```ocaml
@@ -311,13 +415,7 @@ pub fn z_of_substring_base<T>(
         base = 10;
     }
 
-    let s = s
-        .as_array(&caller)?
-        .unwrap()
-        .elems(caller.as_context_mut())?
-        .map(|elem| elem.i32().unwrap() as u8)
-        .collect::<Vec<_>>();
-    let s = String::from_utf8(s)?;
+    let s = to_string(&mut caller, &s)?;
 
     let pos = pos.as_i31(&caller)?.unwrap().get_u32() as usize;
     let len = len.as_i31(&caller)?.unwrap().get_u32() as usize;
