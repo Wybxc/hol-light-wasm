@@ -48,15 +48,15 @@ let () =
     print_endline "OK: pred negative";
 
     (* Test with larger numbers *)
-    (* let large = Z.of_string "123456789012345" in
+    let large = Z.of_string "123456789012345" in
     let large_sign = Z.sign large in
     assert (large_sign = 1);
-    print_endline "OK: sign large number"; *)
+    print_endline "OK: sign large number";
 
-    (* let large_pred = Z.pred large in
+    let large_pred = Z.pred large in
     let expected_large_pred = Z.of_string "123456789012344" in
     assert (Z.equal large_pred expected_large_pred);
-    print_endline "OK: pred large number"; *)
+    print_endline "OK: pred large number";
 
     (* Test Z.add *)
     let x = Z.of_int 15 in
@@ -152,4 +152,24 @@ let () =
     assert (Z.equal exact_div (Z.of_int 7));
     print_endline "OK: divexact";
 
-      print_endline "All tests passed!";
+    (* Test Z.equal *)
+    let x = Z.of_int 42 in
+    let y = Z.of_int 42 in
+    let z = Z.of_int 43 in
+    assert (Z.equal x y = true);
+    assert (Z.equal x z = false);
+    print_endline "OK: equal same values";
+
+    let a = Z.of_int 0 in
+    let b = Z.of_int 0 in
+    assert (Z.equal a b = true);
+    print_endline "OK: equal zero";
+
+    let c = Z.of_int (-10) in
+    let d = Z.of_int (-10) in
+    let e = Z.of_int 10 in
+    assert (Z.equal c d = true);
+    assert (Z.equal c e = false);
+    print_endline "OK: equal negative";
+
+    print_endline "All tests passed!";

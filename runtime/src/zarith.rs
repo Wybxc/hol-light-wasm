@@ -296,6 +296,40 @@ fn z_cdiv<T>(mut caller: Caller<T>, x: Rooted<EqRef>, y: Rooted<EqRef>) -> Resul
     Z::new(result).into_wasm(caller)
 }
 
+/// ```ocaml
+/// val of_substring_base: int -> string -> pos:int -> len:int -> Z
+/// ```
+pub fn z_of_substring_base<T>(
+    mut caller: Caller<T>,
+    base: Rooted<EqRef>,
+    s: Rooted<EqRef>,
+    pos: Rooted<EqRef>,
+    len: Rooted<EqRef>,
+) -> Result<Rooted<EqRef>> {
+    let mut base = base.as_i31(&caller)?.unwrap().get_i32();
+    if base == 0 {
+        base = 10;
+    }
+
+    let s = s
+        .as_array(&caller)?
+        .unwrap()
+        .elems(caller.as_context_mut())?
+        .map(|elem| elem.i32().unwrap() as u8)
+        .collect::<Vec<_>>();
+    let s = String::from_utf8(s)?;
+
+    let pos = pos.as_i31(&caller)?.unwrap().get_u32() as usize;
+    let len = len.as_i31(&caller)?.unwrap().get_u32() as usize;
+    if s.len() - pos < len {
+        anyhow::bail!("substring out of bounds");
+    }
+
+    let s = &s[pos..pos + len];
+    let data = Integer::from_str_radix(s, base)?;
+    Z::new(data).into_wasm(caller)
+}
+
 pub fn add_to_linker<T>(linker: &mut Linker<T>) -> anyhow::Result<()>
 where
     T: 'static,
@@ -321,5 +355,6 @@ where
     linker.func_wrap("env", "ml_z_mul", z_mul)?;
     linker.func_wrap("env", "ml_z_init", z_init)?;
     linker.func_wrap("env", "ml_z_cdiv", z_cdiv)?;
+    linker.func_wrap("env", "ml_z_of_substring_base", z_of_substring_base)?;
     Ok(())
 }
