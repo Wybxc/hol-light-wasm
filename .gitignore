@@ -1,6 +1,10 @@
+_opam
 *.wasm
 *.byte
 *.cmi
 *.cmo
+*.cmx
+*.out
+*.o
 /*.js
 /*.wat

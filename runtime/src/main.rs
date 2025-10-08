@@ -9,26 +9,22 @@ fn main() -> Result<()> {
 
     let engine = Engine::new(&config)?;
 
-    let wat = r#"
-        (module
-            (import "host" "host_func" (func $host_hello (param i32)))
-
-            (func (export "hello")
-                i32.const 3
-                call $host_hello)
-        )
-    "#;
+    let wat = include_bytes!("../../example.wat");
     let module = Module::new(&engine, wat)?;
 
     let mut linker = Linker::new(&engine);
-    linker.func_wrap(
-        "host",
-        "host_func",
-        |caller: Caller<'_, u32>, param: i32| {
-            println!("Got {} from WebAssembly", param);
-            println!("my host state is: {}", caller.data());
-        },
-    )?;
+    linker.func_wrap("js_runtime", "print_endline", || println!())?;
+    linker.func_wrap("js_runtime", "print_i32", |x: i32| print!("{}", x))?;
+    linker.func_wrap("js_runtime", "print_f64", |x: f64| print!("{}", x))?;
+    linker.func_wrap("js_runtime", "putchar", |x: i32| {
+        print!("{}", x as u8 as char)
+    })?;
+    linker.func_wrap("js_runtime", "flush", || { /* flush output */ })?;
+    linker.func_wrap("js_runtime", "atan2", |y: f64, x: f64| y.atan2(x))?;
+    linker.func_wrap("js_runtime", "sin", |x: f64| x.sin())?;
+    linker.func_wrap("js_runtime", "asin", |x: f64| x.asin())?;
+    linker.func_wrap("js_runtime", "cos", |x: f64| x.cos())?;
+    linker.func_wrap("js_runtime", "fmod", |x: f64, y: f64| x % y)?;
 
     let mut store = Store::new(&engine, 4);
     let instance = linker.instantiate(&mut store, &module)?;
@@ -40,14 +36,13 @@ fn main() -> Result<()> {
     for name in &exports {
         let export = instance.get_export(&mut store, name).unwrap();
         let ty = export.ty(&store);
-        let ty = match ty {
-            ExternType::Func(f) => format!("Func: {}", f),
-            ExternType::Global(g) => format!("Global: {:?}", g),
-            ExternType::Memory(m) => format!("Memory: {:?}", m),
-            ExternType::Table(t) => format!("Table: {:?}", t),
-            ExternType::Tag(t) => format!("Tag: {:?}", t),
-        };
-        println!("Export: {} - {}", name, ty);
+        match ty {
+            ExternType::Func(f) => println!("[Func] {name}: {f}"),
+            ExternType::Global(g) => println!("[Global] {name}: {g:?}"),
+            ExternType::Memory(m) => println!("[Memory] {name}: {m:?}"),
+            ExternType::Table(t) => println!("[Table] {name}: {t:?}"),
+            ExternType::Tag(t) => println!("[Tag] {name}: {t:?}"),
+        }
     }
 
     Ok(())

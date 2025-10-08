@@ -1,5 +1,8 @@
-let _ = print_string "!!!!!!\n"
-let msg = "Hello WebAssembly!"
-let _ = print_string msg
-let _ = print_newline ()
-let _ = print_string "!!!!!!\n"
+let rec fib n =
+  if n < 3 then n
+  else fib (n - 1) + fib (n - 2)
+
+let () =
+  let n = 43 in
+  let res = fib n in
+  print_int res
