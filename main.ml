@@ -58,103 +58,98 @@ let () =
     assert (Z.equal large_pred expected_large_pred);
     print_endline "OK: pred large number"; *)
 
-    print_endline "All tests passed!";
-
-    (*
-    TODO: Additional tests for functions that need to be implemented in zarith.rs:
-
-    (* Test Z.add when implemented *)
-    (* let x = Z.of_int 15 in
+    (* Test Z.add *)
+    let x = Z.of_int 15 in
     let y = Z.of_int 25 in
     let sum = Z.add x y in
     assert (Z.equal sum (Z.of_int 40));
-    print_endline "OK: add"; *)
+    print_endline "OK: add";
 
-    (* Test Z.sub when implemented *)
-    (* let x = Z.of_int 50 in
+    (* Test Z.sub *)
+    let x = Z.of_int 50 in
     let y = Z.of_int 30 in
     let diff = Z.sub x y in
     assert (Z.equal diff (Z.of_int 20));
-    print_endline "OK: sub"; *)
+    print_endline "OK: sub";
 
-    (* Test Z.mul when implemented *)
-    (* let x = Z.of_int 6 in
+    (* Test Z.mul *)
+    let x = Z.of_int 6 in
     let y = Z.of_int 7 in
     let product = Z.mul x y in
     assert (Z.equal product (Z.of_int 42));
-    print_endline "OK: mul"; *)
+    print_endline "OK: mul";
 
-    (* Test Z.div when implemented *)
-    (* let x = Z.of_int 42 in
+    (* Test Z.div *)
+    let x = Z.of_int 42 in
     let y = Z.of_int 6 in
     let quotient = Z.div x y in
     assert (Z.equal quotient (Z.of_int 7));
-    print_endline "OK: div"; *)
+    print_endline "OK: div";
 
-    (* Test Z.rem when implemented *)
-    (* let x = Z.of_int 23 in
+    (* Test Z.rem *)
+    let x = Z.of_int 23 in
     let y = Z.of_int 5 in
     let remainder = Z.rem x y in
     assert (Z.equal remainder (Z.of_int 3));
-    print_endline "OK: rem"; *)
+    print_endline "OK: rem";
 
-    (* Test Z.compare when implemented *)
-    (* let x = Z.of_int 10 in
+    (* Test Z.compare *)
+    let x = Z.of_int 10 in
     let y = Z.of_int 20 in
     let z = Z.of_int 10 in
     assert (Z.compare x y = -1);
     assert (Z.compare y x = 1);
     assert (Z.compare x z = 0);
-    print_endline "OK: compare"; *)
+    print_endline "OK: compare";
 
-    (* Test Z.abs when implemented *)
-    (* let x = Z.of_int (-42) in
+    (* Test Z.abs *)
+    let x = Z.of_int (-42) in
     let y = Z.of_int 42 in
     let abs_x = Z.abs x in
     let abs_y = Z.abs y in
     assert (Z.equal abs_x (Z.of_int 42));
     assert (Z.equal abs_y (Z.of_int 42));
-    print_endline "OK: abs"; *)
+    print_endline "OK: abs";
 
-    (* Test Z.neg when implemented *)
-    (* let x = Z.of_int 42 in
+    (* Test Z.neg *)
+    let x = Z.of_int 42 in
     let neg_x = Z.neg x in
     assert (Z.equal neg_x (Z.of_int (-42)));
-    print_endline "OK: neg"; *)
+    print_endline "OK: neg";
 
-    (* Test Z.succ when implemented *)
-    (* let x = Z.of_int 99 in
+    (* Test Z.succ *)
+    let x = Z.of_int 99 in
     let succ_x = Z.succ x in
     assert (Z.equal succ_x (Z.of_int 100));
-    print_endline "OK: succ"; *)
+    print_endline "OK: succ";
 
-    (* Test Z.to_int when implemented *)
-    (* let x = Z.of_int 42 in
+    (* Test Z.to_int *)
+    let x = Z.of_int 42 in
     let i = Z.to_int x in
     assert (i = 42);
-    print_endline "OK: to_int"; *)
+    print_endline "OK: to_int";
 
-    (* Test Z.gcd when implemented *)
-    (* let x = Z.of_int 48 in
+    (* Test Z.gcd *)
+    let x = Z.of_int 48 in
     let y = Z.of_int 18 in
     let gcd_xy = Z.gcd x y in
     assert (Z.equal gcd_xy (Z.of_int 6));
-    print_endline "OK: gcd"; *)
+    print_endline "OK: gcd";
 
-    (* Test Z.fdiv and Z.cdiv when implemented *)
-    (* let x = Z.of_int 23 in
+    (* Test Z.fdiv and Z.cdiv *)
+    let x = Z.of_int 23 in
     let y = Z.of_int 5 in
     let fdiv_result = Z.fdiv x y in
     let cdiv_result = Z.cdiv x y in
     assert (Z.equal fdiv_result (Z.of_int 4));
     assert (Z.equal cdiv_result (Z.of_int 5));
-    print_endline "OK: fdiv and cdiv"; *)
+    print_endline "OK: fdiv and cdiv";
 
-    (* Test Z.divexact when implemented *)
-    (* let x = Z.of_int 42 in
+    (* Test Z.divexact *)
+    let x = Z.of_int 42 in
     let y = Z.of_int 6 in
     let exact_div = Z.divexact x y in
     assert (Z.equal exact_div (Z.of_int 7));
-    print_endline "OK: divexact"; *)
+    print_endline "OK: divexact";
 
-    *)
+      print_endline "All tests passed!";
