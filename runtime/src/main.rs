@@ -1,5 +1,6 @@
 use anyhow::Result;
 use wasmtime::*;
+use wasmtime_wasi::WasiCtxBuilder;
 
 fn main() -> Result<()> {
     let mut config = Config::default();
@@ -13,14 +14,13 @@ fn main() -> Result<()> {
     let module = Module::new(&engine, wat)?;
 
     let mut linker = Linker::new(&engine);
-    /*  (import "wasi_snapshot_preview1" "fd_write" (func (;0;) (type 30)))
-    (import "wasi_snapshot_preview1" "random_get" (func (;1;) (type 27)))
-    (import "wasi_snapshot_preview1" "proc_exit" (func (;2;) (type 25)))
-    (import "wasi_snapshot_preview1" "fd_seek" (func (;3;) (type 31)))
-    (import "wasi_snapshot_preview1" "fd_close" (func (;4;) (type 11))) */
-    linker.func_wrap("wasi_snapshot_preview1", "fd_write", || {})?;
+    wasmtime_wasi::p1::add_to_linker_sync(&mut linker, |t| t)?;
 
-    let mut store = Store::new(&engine, 4);
+    let wasi_ctx = WasiCtxBuilder::new()
+        .inherit_stdio()
+        .inherit_env()
+        .build_p1();
+    let mut store = Store::new(&engine, wasi_ctx);
     let instance = linker.instantiate(&mut store, &module)?;
 
     let exports = instance
@@ -38,6 +38,9 @@ fn main() -> Result<()> {
             ExternType::Tag(t) => println!("[Tag] {name}: {t:?}"),
         }
     }
+
+    let start = instance.get_typed_func::<(), ()>(&mut store, "_start")?;
+    start.call(&mut store, ())?;
 
     Ok(())
 }
