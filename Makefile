@@ -10,5 +10,14 @@ example.js: example.byte
 example.byte: example.ml
 	ocamlc -o $@ $<
 
+opam:
+	opam switch create . 5.2.0
+	opam pin add wasm_of_ocaml-compiler git+https://github.com/ocsigen/js_of_ocaml.git#wasi
+	opam pin add js_of_ocaml-compiler git+https://github.com/ocsigen/js_of_ocaml.git#wasi
+	opam pin add js_of_ocaml git+https://github.com/ocsigen/js_of_ocaml.git#wasi
+
 clean:
 	rm -rf *.cm* *.o *.wasm *.byte *.wat *.js
+	rm -rf *.assets/
+
+.PHONY: clean opam
