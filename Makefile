@@ -15,6 +15,7 @@ opam:
 	opam pin add js_of_ocaml git+https://github.com/ocsigen/js_of_ocaml.git#8c5a20c99bc46681f5a726ef41e5864cc298f159
 	opam pin add js_of_ocaml-compiler git+https://github.com/ocsigen/js_of_ocaml.git#8c5a20c99bc46681f5a726ef41e5864cc298f159
 	opam pin add wasm_of_ocaml-compiler git+https://github.com/ocsigen/js_of_ocaml.git#8c5a20c99bc46681f5a726ef41e5864cc298f159
+	opam pin add hol_light ./hol-light/ --kind=local
 
 clean:
 	rm -rf *.cm* *.o *.wasm *.byte *.wat *.js
