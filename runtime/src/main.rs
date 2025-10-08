@@ -2,6 +2,8 @@ use anyhow::Result;
 use wasmtime::*;
 use wasmtime_wasi::WasiCtxBuilder;
 
+mod zarith;
+
 fn main() -> Result<()> {
     let mut config = Config::default();
     config.wasm_gc(true);
@@ -17,6 +19,7 @@ fn main() -> Result<()> {
     eprintln!("Loading WASI...");
     let mut linker = Linker::new(&engine);
     wasmtime_wasi::p1::add_to_linker_sync(&mut linker, |t| t)?;
+    zarith::add_to_linker(&mut linker)?;
 
     let wasi_ctx = WasiCtxBuilder::new()
         .inherit_stdio()
