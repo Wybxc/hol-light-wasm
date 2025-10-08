@@ -6,7 +6,6 @@ mod zarith;
 
 fn main() -> Result<()> {
     let mut config = Config::default();
-    config.async_support(false);
     config.wasm_gc(true);
     config.wasm_function_references(true);
     config.wasm_exceptions(true);
