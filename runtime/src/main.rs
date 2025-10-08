@@ -13,18 +13,12 @@ fn main() -> Result<()> {
     let module = Module::new(&engine, wat)?;
 
     let mut linker = Linker::new(&engine);
-    linker.func_wrap("js_runtime", "print_endline", || println!())?;
-    linker.func_wrap("js_runtime", "print_i32", |x: i32| print!("{}", x))?;
-    linker.func_wrap("js_runtime", "print_f64", |x: f64| print!("{}", x))?;
-    linker.func_wrap("js_runtime", "putchar", |x: i32| {
-        print!("{}", x as u8 as char)
-    })?;
-    linker.func_wrap("js_runtime", "flush", || { /* flush output */ })?;
-    linker.func_wrap("js_runtime", "atan2", |y: f64, x: f64| y.atan2(x))?;
-    linker.func_wrap("js_runtime", "sin", |x: f64| x.sin())?;
-    linker.func_wrap("js_runtime", "asin", |x: f64| x.asin())?;
-    linker.func_wrap("js_runtime", "cos", |x: f64| x.cos())?;
-    linker.func_wrap("js_runtime", "fmod", |x: f64, y: f64| x % y)?;
+    /*  (import "wasi_snapshot_preview1" "fd_write" (func (;0;) (type 30)))
+    (import "wasi_snapshot_preview1" "random_get" (func (;1;) (type 27)))
+    (import "wasi_snapshot_preview1" "proc_exit" (func (;2;) (type 25)))
+    (import "wasi_snapshot_preview1" "fd_seek" (func (;3;) (type 31)))
+    (import "wasi_snapshot_preview1" "fd_close" (func (;4;) (type 11))) */
+    linker.func_wrap("wasi_snapshot_preview1", "fd_write", || {})?;
 
     let mut store = Store::new(&engine, 4);
     let instance = linker.instantiate(&mut store, &module)?;
