@@ -22,7 +22,8 @@ switch:
 hol-light:
 	@echo "Building and pinning hol_light package..."
 	cd hol-light && make HOLLIGHT_USE_MODULE=1
-	opam pin add hol_light ./hol-light --kind=local
+	opam pin add hol_light ./hol-light --kind=local --confirm-level=yes
+	opam reinstall hol_light --verbose --confirm-level=yes
 
 clean:
 	rm -rf *.cm* *.o *.wasm *.byte *.wat *.js

@@ -6,9 +6,12 @@ mod zarith;
 
 fn main() -> Result<()> {
     let mut config = Config::default();
+    config.async_support(false);
     config.wasm_gc(true);
     config.wasm_function_references(true);
     config.wasm_exceptions(true);
+    config.wasm_tail_call(true);
+    config.debug_info(true);
 
     let engine = Engine::new(&config)?;
 
@@ -22,8 +25,8 @@ fn main() -> Result<()> {
     zarith::add_to_linker(&mut linker)?;
 
     let wasi_ctx = WasiCtxBuilder::new()
-        .inherit_stdio()
-        .inherit_env()
+        .inherit_stdout()
+        .inherit_stderr()
         .build_p1();
     let mut store = Store::new(&engine, wasi_ctx);
     let instance = linker.instantiate(&mut store, &module)?;
