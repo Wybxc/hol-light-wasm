@@ -215,10 +215,11 @@ fn z_succ<T>(caller: Caller<T>, x: Rooted<EqRef>) -> Result<Rooted<EqRef>> {
 /// ```ocaml
 /// val pred : Z -> Z
 /// ```
-fn z_pred<T>(caller: Caller<T>, x: Rooted<EqRef>) -> Result<Rooted<EqRef>> {
-    let ty_x = x.ty(&caller)?;
-    println!("pred: {ty_x}");
-    todo!()
+fn z_pred<T>(mut caller: Caller<T>, x: Rooted<EqRef>) -> Result<Rooted<EqRef>> {
+    let x = Z::from_wasm(&mut caller, &x)?;
+    let result = x.inner() - 1i32;
+    let result = result.complete();
+    Z::new(result).into_wasm(caller)
 }
 
 /// ```ocaml
