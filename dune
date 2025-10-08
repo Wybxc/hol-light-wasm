@@ -2,7 +2,7 @@
  (public_name hol_light_wasm)
  (name main)
  (modes byte)
- (libraries hol_light)
+ (libraries zarith)
  (preprocessor_deps
   (package camlp5)
   (package hol_light))

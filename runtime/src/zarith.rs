@@ -1,135 +1,256 @@
+use std::ops::Shl;
+
+use rug::{Complete, Integer, integer::Order};
 use wasmtime::*;
+
+// TODO: union(i32, Integer)?
+
+#[derive(Debug, Clone)]
+struct Z {
+    data: Integer,
+}
+
+impl Z {
+    const ORDER: Order = Order::Lsf;
+
+    pub fn new(data: Integer) -> Self {
+        Self { data }
+    }
+
+    pub fn from_wasm(mut store: impl AsContextMut, value: &EqRef) -> Result<Self> {
+        if let Some(i31) = value.as_i31(&store)? {
+            Ok(Self::new(Integer::from(i31.get_i32())))
+        } else if let Some(arr) = value.as_array(&store)? {
+            let digits = arr
+                .elems(store.as_context_mut())?
+                .map(|elem| {
+                    elem.i64()
+                        .map(|i| i as u64)
+                        .ok_or_else(|| anyhow::anyhow!("expected i64"))
+                })
+                .collect::<Result<Vec<_>>>()?;
+
+            let data = Integer::from_digits(&digits, Self::ORDER);
+            Ok(Self::new(data))
+        } else {
+            anyhow::bail!("expected i31 or array, got {:?}", value.ty(store)?);
+        }
+    }
+
+    pub fn into_wasm(self, mut store: impl AsContextMut) -> Result<Rooted<EqRef>> {
+        let digits = self.data.to_digits::<u64>(Self::ORDER);
+        let digits = digits
+            .into_iter()
+            .map(|d| Val::I64(d as i64))
+            .collect::<Vec<_>>();
+        let array_ty = ArrayType::new(
+            store.as_context().engine(),
+            FieldType::new(Mutability::Const, ValType::I64.into()),
+        );
+        let allocator = ArrayRefPre::new(&mut store, array_ty);
+        let array = ArrayRef::new_fixed(store, &allocator, &digits)?;
+        Ok(array.to_eqref())
+    }
+
+    pub fn inner(&self) -> &Integer {
+        &self.data
+    }
+}
+
+fn int(mut store: impl AsContextMut, x: i32) -> Result<Rooted<EqRef>> {
+    let i31 = I31::new_i32(x).expect("i31");
+    AnyRef::from_i31(&mut store, i31).unwrap_eqref(&mut store)
+}
 
 /// ```ocaml
 /// val sign : Z -> int
 /// ```
-fn z_sign(_x: Rooted<EqRef>) -> Rooted<EqRef> {
-    todo!()
+fn z_sign<T>(mut caller: Caller<T>, x: Rooted<EqRef>) -> Result<Rooted<EqRef>> {
+    let x = Z::from_wasm(&mut caller, &x)?;
+    let s = x.inner().signum_ref().complete().to_i32().unwrap();
+    int(caller, s)
 }
 
 /// ```ocaml
 /// val format : string -> Z -> string
 /// ```
-fn z_format(_x: Rooted<EqRef>, _y: Rooted<EqRef>) -> Rooted<EqRef> {
+fn z_format<T>(caller: Caller<T>, x: Rooted<EqRef>, y: Rooted<EqRef>) -> Result<Rooted<EqRef>> {
+    let ty_x = x.ty(&caller)?;
+    let ty_y = y.ty(&caller)?;
+    println!("format: {ty_x}, {ty_y}");
     todo!()
 }
 
 /// ```ocaml
 /// val equal : Z -> Z -> bool
 /// ```
-fn z_equal(_x: Rooted<EqRef>, _y: Rooted<EqRef>) -> Rooted<EqRef> {
+fn z_equal<T>(caller: Caller<T>, x: Rooted<EqRef>, y: Rooted<EqRef>) -> Result<Rooted<EqRef>> {
+    let ty_x = x.ty(&caller)?;
+    let ty_y = y.ty(&caller)?;
+    println!("equal: {ty_x}, {ty_y}");
     todo!()
 }
 
 /// ```ocaml
 /// val sub : Z -> Z -> Z
 /// ```
-fn z_sub(_x: Rooted<EqRef>, _y: Rooted<EqRef>) -> Rooted<EqRef> {
+fn z_sub<T>(caller: Caller<T>, x: Rooted<EqRef>, y: Rooted<EqRef>) -> Result<Rooted<EqRef>> {
+    let ty_x = x.ty(&caller)?;
+    let ty_y = y.ty(&caller)?;
+    println!("sub: {ty_x}, {ty_y}");
     todo!()
 }
 
 /// ```ocaml
 /// val shift_left : Z -> int -> Z
 /// ```
-fn z_shift_left(_x: Rooted<EqRef>, _y: Rooted<EqRef>) -> Rooted<EqRef> {
-    todo!()
+fn z_shift_left<T>(
+    mut caller: Caller<T>,
+    x: Rooted<EqRef>,
+    y: Rooted<EqRef>,
+) -> Result<Rooted<EqRef>> {
+    let x = Z::from_wasm(&mut caller, &x)?;
+    let y = y.as_i31(&caller)?.unwrap().get_u32();
+    let result = x.inner().shl(y).complete();
+    Z::new(result).into_wasm(caller)
 }
 
 /// ```ocaml
 /// val rem : Z -> Z -> Z
 /// ```
-fn z_rem(_x: Rooted<EqRef>, _y: Rooted<EqRef>) -> Rooted<EqRef> {
+fn z_rem<T>(caller: Caller<T>, x: Rooted<EqRef>, y: Rooted<EqRef>) -> Result<Rooted<EqRef>> {
+    let ty_x = x.ty(&caller)?;
+    let ty_y = y.ty(&caller)?;
+    println!("rem: {ty_x}, {ty_y}");
     todo!()
 }
 
 /// ```ocaml
 /// val gcd : Z -> Z -> Z
 /// ```
-fn z_gcd(_x: Rooted<EqRef>, _y: Rooted<EqRef>) -> Rooted<EqRef> {
+fn z_gcd<T>(caller: Caller<T>, x: Rooted<EqRef>, y: Rooted<EqRef>) -> Result<Rooted<EqRef>> {
+    let ty_x = x.ty(&caller)?;
+    let ty_y = y.ty(&caller)?;
+    println!("gcd: {ty_x}, {ty_y}");
     todo!()
 }
 
 /// ```ocaml
 /// val fdiv : Z -> Z -> Z
 /// ```
-fn z_fdiv(_x: Rooted<EqRef>, _y: Rooted<EqRef>) -> Rooted<EqRef> {
+fn z_fdiv<T>(caller: Caller<T>, x: Rooted<EqRef>, y: Rooted<EqRef>) -> Result<Rooted<EqRef>> {
+    let ty_x = x.ty(&caller)?;
+    let ty_y = y.ty(&caller)?;
+    println!("fdiv: {ty_x}, {ty_y}");
     todo!()
 }
 
 /// ```ocaml
 /// val divexact : Z -> Z -> Z
 /// ```
-fn z_divexact(_x: Rooted<EqRef>, _y: Rooted<EqRef>) -> Rooted<EqRef> {
+fn z_divexact<T>(caller: Caller<T>, x: Rooted<EqRef>, y: Rooted<EqRef>) -> Result<Rooted<EqRef>> {
+    let ty_x = x.ty(&caller)?;
+    let ty_y = y.ty(&caller)?;
+    println!("divexact: {ty_x}, {ty_y}");
     todo!()
 }
 
 /// ```ocaml
 /// val div : Z -> Z -> Z
 /// ```
-fn z_div(_x: Rooted<EqRef>, _y: Rooted<EqRef>) -> Rooted<EqRef> {
+fn z_div<T>(caller: Caller<T>, x: Rooted<EqRef>, y: Rooted<EqRef>) -> Result<Rooted<EqRef>> {
+    let ty_x = x.ty(&caller)?;
+    let ty_y = y.ty(&caller)?;
+    println!("div: {ty_x}, {ty_y}");
     todo!()
 }
 
 /// ```ocaml
 /// val compare : Z -> Z -> int
 /// ```
-fn z_compare(_x: Rooted<EqRef>, _y: Rooted<EqRef>) -> Rooted<EqRef> {
+fn z_compare<T>(caller: Caller<T>, x: Rooted<EqRef>, y: Rooted<EqRef>) -> Result<Rooted<EqRef>> {
+    let ty_x = x.ty(&caller)?;
+    let ty_y = y.ty(&caller)?;
+    println!("compare: {ty_x}, {ty_y}");
     todo!()
 }
 
 /// ```ocaml
 /// val add : Z -> Z -> Z
 /// ```
-fn z_add(_x: Rooted<EqRef>, _y: Rooted<EqRef>) -> Rooted<EqRef> {
+fn z_add<T>(caller: Caller<T>, x: Rooted<EqRef>, y: Rooted<EqRef>) -> Result<Rooted<EqRef>> {
+    let ty_x = x.ty(&caller)?;
+    let ty_y = y.ty(&caller)?;
+    println!("add: {ty_x}, {ty_y}");
     todo!()
 }
 
 /// ```ocaml
 /// val abs : Z -> Z
 /// ```
-fn z_abs(_x: Rooted<EqRef>) -> Rooted<EqRef> {
+fn z_abs<T>(caller: Caller<T>, x: Rooted<EqRef>) -> Result<Rooted<EqRef>> {
+    let ty_x = x.ty(&caller)?;
+    println!("abs: {ty_x}");
     todo!()
 }
 
 /// ```ocaml
 /// val to_int : Z -> int
 /// ```
-fn z_to_int(_x: Rooted<EqRef>) -> Rooted<EqRef> {
+fn z_to_int<T>(caller: Caller<T>, x: Rooted<EqRef>) -> Result<Rooted<EqRef>> {
+    let ty_x = x.ty(&caller)?;
+    println!("to_int: {ty_x}");
     todo!()
 }
 
 /// ```ocaml
 /// val succ : Z -> Z
 /// ```
-fn z_succ(_x: Rooted<EqRef>) -> Rooted<EqRef> {
+fn z_succ<T>(caller: Caller<T>, x: Rooted<EqRef>) -> Result<Rooted<EqRef>> {
+    let ty_x = x.ty(&caller)?;
+    println!("succ: {ty_x}");
     todo!()
 }
 
 /// ```ocaml
 /// val pred : Z -> Z
 /// ```
-fn z_pred(_x: Rooted<EqRef>) -> Rooted<EqRef> {
+fn z_pred<T>(caller: Caller<T>, x: Rooted<EqRef>) -> Result<Rooted<EqRef>> {
+    let ty_x = x.ty(&caller)?;
+    println!("pred: {ty_x}");
     todo!()
 }
 
 /// ```ocaml
 /// val neg : Z -> Z
 /// ```
-fn z_neg(_x: Rooted<EqRef>) -> Rooted<EqRef> {
+fn z_neg<T>(caller: Caller<T>, x: Rooted<EqRef>) -> Result<Rooted<EqRef>> {
+    let ty_x = x.ty(&caller)?;
+    println!("neg: {ty_x}");
     todo!()
 }
 
 /// ```ocaml
 /// val mul_overflows : int -> int -> bool
 /// ```
-fn z_mul_overflows(_x: Rooted<EqRef>, _y: Rooted<EqRef>) -> Rooted<EqRef> {
+fn z_mul_overflows<T>(
+    caller: Caller<T>,
+    x: Rooted<EqRef>,
+    y: Rooted<EqRef>,
+) -> Result<Rooted<EqRef>> {
+    let ty_x = x.ty(&caller)?;
+    let ty_y = y.ty(&caller)?;
+    println!("mul_overflows: {ty_x}, {ty_y}");
     todo!()
 }
 
 /// ```ocaml
 /// val mul : Z -> Z -> Z
 /// ```
-fn z_mul(_x: Rooted<EqRef>, _y: Rooted<EqRef>) -> Rooted<EqRef> {
+fn z_mul<T>(caller: Caller<T>, x: Rooted<EqRef>, y: Rooted<EqRef>) -> Result<Rooted<EqRef>> {
+    let ty_x = x.ty(&caller)?;
+    let ty_y = y.ty(&caller)?;
+    println!("mul: {ty_x}, {ty_y}");
     todo!()
 }
 
@@ -143,7 +264,10 @@ fn z_init(unit: Rooted<EqRef>) -> Rooted<EqRef> {
 /// ```ocaml
 /// val cdiv : Z -> Z -> Z
 /// ```
-fn z_cdiv(_x: Rooted<EqRef>, _y: Rooted<EqRef>) -> Rooted<EqRef> {
+fn z_cdiv<T>(caller: Caller<T>, x: Rooted<EqRef>, y: Rooted<EqRef>) -> Result<Rooted<EqRef>> {
+    let ty_x = x.ty(&caller)?;
+    let ty_y = y.ty(&caller)?;
+    println!("cdiv: {ty_x}, {ty_y}");
     todo!()
 }
 

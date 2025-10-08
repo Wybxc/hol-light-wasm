@@ -7,8 +7,9 @@ main.wasm: main.js
 main.js: main.byte
 	wasm_of_ocaml --enable wasi --enable exnref $< -o $@
 
-main.byte:
+main.byte: main.ml
 	dune build
+	rm -f $@
 	cp _build/default/main.bc $@
 
 switch:

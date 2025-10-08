@@ -1,1 +1,4 @@
-let _ = print_endline (Prover.tm_s)
+let () =
+    let a = Z.of_int 1234 in
+    let s = Z.sign a in
+    print_int s;
