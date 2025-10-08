@@ -10,9 +10,11 @@ fn main() -> Result<()> {
 
     let engine = Engine::new(&config)?;
 
-    let wat = include_bytes!("../../example.wat");
+    eprintln!("Loading WebAssembly module...");
+    let wat = include_bytes!("../../main.wasm");
     let module = Module::new(&engine, wat)?;
 
+    eprintln!("Loading WASI...");
     let mut linker = Linker::new(&engine);
     wasmtime_wasi::p1::add_to_linker_sync(&mut linker, |t| t)?;
 
@@ -39,6 +41,7 @@ fn main() -> Result<()> {
         }
     }
 
+    eprintln!("Start WASM run!");
     let start = instance.get_typed_func::<(), ()>(&mut store, "_start")?;
     start.call(&mut store, ())?;
 

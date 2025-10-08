@@ -1,0 +1,13 @@
+(executable
+ (public_name hol_light_wasm)
+ (name main)
+ (modes byte)
+ (libraries hol_light)
+ (preprocessor_deps
+  (package camlp5)
+  (package hol_light))
+ (preprocess
+  (per_module
+   ((action
+     (run camlp5o %{lib:hol_light:pa_j.cmo} %{input-file}))
+    prover))))
