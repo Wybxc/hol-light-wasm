@@ -1,8 +1,16 @@
 main.wat: main.wasm
 	wasm-tools print $< > $@
 
+main.preinit.wasm: main.wasm
+	wizer $< --allow-wasi -o $@
+
+SKIPOPT=--traps-never-happen
+O3=--dae --gufa --global-refining --heap-store-optimization --heap2local --inlining-optimizing -O3 $(SKIPOPT) --metrics
+Oz=-Oz $(SKIPOPT) --metrics
+WASMOPTFLAGS=-g --closed-world --metrics --precompute --type-unfinalizing --generate-global-effects --ssa --type-ssa --metrics $(O3) $(O3) $(O3) --monomorphize $(O3) --gto --type-merging --minimize-rec-groups --converge $(Oz) --type-finalizing --metrics
+
 main.wasm: main.js
-	cp main.assets/code.wasm main.wasm
+	wasm-opt $(WASMOPTFLAGS) main.assets/code.wasm -o $@
 
 main.js: main.byte
 	wasm_of_ocaml --enable wasi --enable exnref $< -o $@

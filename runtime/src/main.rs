@@ -11,6 +11,7 @@ fn main() -> Result<()> {
     config.wasm_exceptions(true);
     config.wasm_tail_call(true);
     config.debug_info(true);
+    config.cranelift_opt_level(OptLevel::SpeedAndSize);
 
     let engine = Engine::new(&config)?;
 

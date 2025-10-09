@@ -16,6 +16,7 @@ wasmtime = { version = "37.0.2", default-features = false, features = [
     "pooling-allocator",
     "coredump",
     "gc",
+    "gc-drc"
 ] }
 wasmtime-wasi = { version = "37.0.2", default-features = false, features = [
     "p1",
