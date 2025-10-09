@@ -12,6 +12,11 @@ fn main() -> Result<()> {
     config.wasm_tail_call(true);
     config.debug_info(true);
     config.cranelift_opt_level(OptLevel::SpeedAndSize);
+    config.allocation_strategy(
+        PoolingAllocationConfig::new()
+            .max_memory_size(4_000_000)
+            .to_owned(),
+    );
 
     let engine = Engine::new(&config)?;
 
