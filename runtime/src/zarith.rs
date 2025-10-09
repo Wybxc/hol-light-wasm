@@ -1,3 +1,8 @@
+//! Polyfill for Zarith library used by OCaml runtime.
+//!
+//! Here only a subset of Zarith functions are implemented, which are sufficient
+//! for running HOL Light.
+
 use rug::{Complete, Integer, integer::Order, ops::DivRounding};
 use wasmtime::*;
 
@@ -109,85 +114,6 @@ fn z_sign<T>(mut caller: Caller<T>, x: Rooted<EqRef>) -> Result<Rooted<EqRef>> {
     from_int(caller, s)
 }
 
-/*external format: string -> t -> string = "ml_z_format"
-(** Gives a string representation of the argument in the specified
-   printf-like format.
-   The general specification has the following form:
-
-   [% \[flags\] \[width\] type]
-
-   Where the type actually indicates the base:
-
-   - [i], [d], [u]: decimal
-   - [b]: binary
-   - [o]: octal
-   - [x]: lowercase hexadecimal
-   - [X]: uppercase hexadecimal
-
-   Supported flags are:
-
-   - [+]: prefix positive numbers with a [+] sign
-   - space: prefix positive numbers with a space
-   - [-]: left-justify (default is right justification)
-   - [0]: pad with zeroes (instead of spaces)
-   - [#]: alternate formatting (actually, simply output a literal-like prefix: [0x], [0b], [0o])
-
-   Unlike the classic [printf], all numbers are signed (even hexadecimal ones),
-   there is no precision field, and characters that are not part of the format
-   are simply ignored (and not copied in the output).
-*)
-
-  let base = 10;
-  let cas = 0;
-  let width = 0;
-  let alt = 0;
-  let dir = 0;
-  let sign = '';
-  let pad = ' ';
-  let idx = 0;
-  let prefix = "";
-  while (fmt[idx] == '%') idx++;
-  for (; ; idx++) {
-    if (fmt[idx] == '#') alt = 1;
-    else if (fmt[idx] == '0') pad = '0';
-    else if (fmt[idx] == '-') dir = 1;
-    else if (fmt[idx] == ' ' || fmt[idx] == '+') sign = fmt[idx];
-    else break;
-  }
-  if (z1n < 0) { sign = '-'; z1n = -z1n }
-  for (; fmt[idx] >= '0' && fmt[idx] <= '9'; idx++)
-    width = 10 * width + (+fmt[idx]);
-  switch (fmt[idx]) {
-    case 'i': case 'd': case 'u': break;
-    case 'b': base = 2; if (alt) prefix = "0b"; break;
-    case 'o': base = 8; if (alt) prefix = "0o"; break;
-    case 'x': base = 16; if (alt) prefix = "0x"; break;
-    case 'X': base = 16; if (alt) prefix = "0X"; cas = 1; break;
-    default:
-      caml_failwith("Unsupported format '" + fmt + "'");
-  }
-  if (dir) pad = ' ';
-  let res = z1n.toString(base);
-  if (cas === 1) {
-    res = res.toUpperCase();
-  }
-  let size = res.length;
-  if (pad == ' ') {
-    if (dir) {
-      res = sign + prefix + res;
-      for (; res.length < width;) res = res + pad;
-    } else {
-      res = sign + prefix + res;
-      for (; res.length < width;) res = pad + res;
-    }
-  } else {
-    let pre = sign + prefix;
-    for (; res.length + pre.length < width;) res = pad + res;
-    res = pre + res;
-  }
-
-*/
-
 /// ```ocaml
 /// val format : string -> Z -> string
 /// ```
@@ -195,7 +121,7 @@ fn z_format<T>(mut caller: Caller<T>, s: Rooted<EqRef>, x: Rooted<EqRef>) -> Res
     let s = to_string(&mut caller, &s)?;
     let x = Z::from_wasm(&mut caller, &x)?;
     println!("formatting {:?} with {:?}", x, s);
-    from_string(&mut caller, "")
+    from_string(&mut caller, "") // TODO: implement this function
 }
 
 /// ```ocaml
