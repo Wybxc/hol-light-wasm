@@ -23,9 +23,9 @@ main.byte: main.ml
 switch:
 	@echo "Creating and switching to OCaml 5.2.0 environment with necessary packages..."
 	opam switch create . 5.2.0
-	opam pin add js_of_ocaml git+https://github.com/ocsigen/js_of_ocaml.git#8c5a20c99bc46681f5a726ef41e5864cc298f159
-	opam pin add js_of_ocaml-compiler git+https://github.com/ocsigen/js_of_ocaml.git#8c5a20c99bc46681f5a726ef41e5864cc298f159
-	opam pin add wasm_of_ocaml-compiler git+https://github.com/ocsigen/js_of_ocaml.git#8c5a20c99bc46681f5a726ef41e5864cc298f159
+	opam pin add js_of_ocaml git+https://github.com/ocsigen/js_of_ocaml.git#6af5f5ce9b9bee9a58d07d7c97c8621eb3eb5845 --confirm-level=yes
+	opam pin add js_of_ocaml-compiler git+https://github.com/ocsigen/js_of_ocaml.git#6af5f5ce9b9bee9a58d07d7c97c8621eb3eb5845 --confirm-level=yes
+	opam pin add wasm_of_ocaml-compiler git+https://github.com/ocsigen/js_of_ocaml.git#6af5f5ce9b9bee9a58d07d7c97c8621eb3eb5845 --confirm-level=yes
 
 hol-light:
 	@echo "Building and pinning hol_light package..."

@@ -6,7 +6,7 @@ edition = "2024"
 [dependencies]
 anyhow = "1.0.100"
 rug = "1.28.0"
-wasmtime = { version = "37.0.2", default-features = false, features = [
+wasmtime = { version = "38.0.1", default-features = false, features = [
     "runtime",
     "cranelift",
     "cache",
@@ -18,7 +18,7 @@ wasmtime = { version = "37.0.2", default-features = false, features = [
     "gc",
     "gc-drc"
 ] }
-wasmtime-wasi = { version = "37.0.2", default-features = false, features = [
+wasmtime-wasi = { version = "38.0.1", default-features = false, features = [
     "p1",
 ] }
 
