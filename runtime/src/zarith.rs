@@ -34,14 +34,14 @@ impl Z {
                 .map(|elem| {
                     elem.i64()
                         .map(|i| i as u64)
-                        .ok_or_else(|| anyhow::anyhow!("expected i64"))
+                        .ok_or_else(|| wasmtime::format_err!("expected i64"))
                 })
                 .collect::<Result<Vec<_>>>()?;
 
             let data = Integer::from_digits(&digits, Self::ORDER);
             Ok(Self::new(data))
         } else {
-            anyhow::bail!("expected i31 or array, got {:?}", value.ty(store)?);
+            wasmtime::bail!("expected i31 or array, got {:?}", value.ty(store)?);
         }
     }
 
@@ -88,7 +88,7 @@ fn to_string(mut store: impl AsContextMut, s: &EqRef) -> Result<String> {
         .map(|elem| {
             elem.i32()
                 .map(|i| i as u8)
-                .ok_or_else(|| anyhow::anyhow!("expected i32"))
+                .ok_or_else(|| wasmtime::format_err!("expected i32"))
         })
         .collect::<Result<Vec<_>>>()?;
     Ok(String::from_utf8(s)?)
@@ -253,7 +253,7 @@ fn z_to_int<T>(mut caller: Caller<T>, x: Rooted<EqRef>) -> Result<Rooted<EqRef>>
     let result = x
         .inner()
         .to_i32()
-        .ok_or_else(|| anyhow::anyhow!("overflow"))?;
+        .ok_or_else(|| wasmtime::format_err!("overflow"))?;
     from_int(&mut caller, result)
 }
 
@@ -346,7 +346,7 @@ pub fn z_of_substring_base<T>(
     let pos = pos.as_i31(&caller)?.unwrap().get_u32() as usize;
     let len = len.as_i31(&caller)?.unwrap().get_u32() as usize;
     if s.len() - pos < len {
-        anyhow::bail!("substring out of bounds");
+        wasmtime::bail!("substring out of bounds");
     }
 
     let s = &s[pos..pos + len];
@@ -354,7 +354,7 @@ pub fn z_of_substring_base<T>(
     Z::new(data).into_wasm(caller)
 }
 
-pub fn add_to_linker<T>(linker: &mut Linker<T>) -> anyhow::Result<()>
+pub fn add_to_linker<T>(linker: &mut Linker<T>) -> wasmtime::Result<()>
 where
     T: 'static,
 {
