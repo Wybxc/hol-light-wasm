@@ -120,8 +120,105 @@ fn z_sign<T>(mut caller: Caller<T>, x: Rooted<EqRef>) -> Result<Rooted<EqRef>> {
 fn z_format<T>(mut caller: Caller<T>, s: Rooted<EqRef>, x: Rooted<EqRef>) -> Result<Rooted<EqRef>> {
     let s = to_string(&mut caller, &s)?;
     let x = Z::from_wasm(&mut caller, &x)?;
-    println!("formatting {:?} with {:?}", x, s);
-    from_string(&mut caller, "") // TODO: implement this function
+    let n = x.inner();
+
+    // Quick path for "%d" format, which is the most common case.
+    if s == "%d" {
+        return from_string(&mut caller, &n.to_string());
+    }
+
+    // Format: % [flags] [width] type
+    // Characters not part of the format are ignored.
+    let s = s.trim();
+
+    // Find '%', then parse from after it, skipping any extra '%' chars
+    let Some(pct) = s.find('%') else {
+        return from_string(&mut caller, "");
+    };
+    let rest = s[pct + 1..].trim_start_matches('%');
+
+    // Parse flags: #, 0, -, +, ' '
+    let mut alt = false; // #
+    let mut pad_zero = false; // 0
+    let mut left = false; // -
+    let mut sign = ""; // + or ' ' or ""
+
+    let mut i = 0;
+    let chars: Vec<char> = rest.chars().collect();
+
+    while i < chars.len() {
+        match chars[i] {
+            '#' => alt = true,
+            '0' => pad_zero = true,
+            '-' => left = true,
+            '+' => sign = "+",
+            ' ' if !sign.contains('+') => sign = " ",
+            _ => break,
+        }
+        i += 1;
+    }
+
+    // Determine actual sign from the number
+    let n_abs: Integer = n.clone().abs();
+    let n_sign: &str = if n.is_negative() { "-" } else { sign };
+
+    // Parse width
+    let mut width: usize = 0;
+    while i < chars.len() && chars[i].is_ascii_digit() {
+        width = width * 10 + (chars[i] as u32 as usize);
+        i += 1;
+    }
+
+    // Parse type
+    let (base, uppercase, prefix) = match chars.get(i) {
+        Some('i') | Some('d') | Some('u') => (10, false, ""),
+        Some('b') => (2, false, if alt { "0b" } else { "" }),
+        Some('o') => (8, false, if alt { "0o" } else { "" }),
+        Some('x') => (16, false, if alt { "0x" } else { "" }),
+        Some('X') => (16, true, if alt { "0X" } else { "" }),
+        _ => return from_string(&mut caller, ""), // unsupported → empty string
+    };
+
+    // Format the absolute value in the given base
+    let mut res = match base {
+        2 => format!("{:b}", n_abs),
+        8 => format!("{:o}", n_abs),
+        10 => n_abs.to_string(),
+        16 if uppercase => format!("{:X}", n_abs),
+        16 => format!("{:x}", n_abs),
+        _ => n_abs.to_string(),
+    };
+
+    // Width of the numeric part
+    let num_len = res.len();
+    let pre = format!("{}{}", n_sign, prefix);
+    let pre_len = pre.len();
+
+    if left {
+        pad_zero = false;
+    }
+
+    // Apply padding
+    if width > num_len + pre_len {
+        let pad_count = width - num_len - pre_len;
+        if pad_zero {
+            // Zero-pad: prefix + sign + zero-padded number
+            let pad = "0".repeat(pad_count);
+            res = format!("{}{}{}", pre, pad, res);
+        } else if left {
+            // Left-justify: sign + prefix + number + spaces
+            let pad = " ".repeat(pad_count);
+            res = format!("{}{}", pre.to_owned() + &res, pad);
+        } else {
+            // Right-justify (default): spaces + sign + prefix + number
+            let pad = " ".repeat(pad_count);
+            res = format!("{}{}{}", pad, pre, res);
+        }
+    } else {
+        res = format!("{}{}", pre, res);
+    }
+
+    from_string(&mut caller, &res)
 }
 
 /// ```ocaml
