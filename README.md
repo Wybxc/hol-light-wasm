@@ -2,10 +2,6 @@
 
 A proof of concept of compiling [HOL Light](https://github.com/jrh13/hol-light) to WebAssembly and running it in the [`wasmtime`](https://github.com/bytecodealliance/wasmtime) runtime.
 
-> [!Warning]
->
-> Due to some technical limitations, this project is currently unable to operate. Please refer to the [Limitations](#limitations) section below.
-
 ## How does it work?
 
 The HOL Light theorem prover is written almost entirely in the OCaml programming language, with the Zarith library as its only native dependency.
@@ -51,11 +47,9 @@ Alternative approaches to achieving similar outcomes include: modifying the HOL 
 
 Currently, several issues are preventing this project from becoming functional:
 
-- ~~[Bugs](https://github.com/bytecodealliance/wasmtime/issues/11753) in the GC implementation of `wasmtime` cause HOL Light to hang during initialization. Disabling GC in `wasmtime` (by enabling the `gc-null` feature) allows the module to execute further, but it still fails because memory is quickly exhausted without GC.~~ Fixed in `wasmtime` 47.0.0.
-- ~~HOL Light’s special module system results in a very large initializer function (over 133k lines in WAT!), which may exceed the size limit for a single function in `cranelift` (the default backend of `wasmtime`) on certain platforms. I have tested this on arm64 macOS, x86_64 Linux, and arm64 Linux, and only x86_64 Linux works.~~ Fixed in `wasmtime` 47.0.0.
 - Regarding the ultimate goal of checkpointing, `wizer` does not yet support WasmGC. I'm not sure whether this is a theoretical limitation or simply not yet implemented.
 
-## I want to try it though...
+## I want to try it
 
 Steps to build and run the project:
 
@@ -69,6 +63,15 @@ Steps to build and run the project:
 4. Run `make hol-light` to build and install HOL Light to the OPAM switch.
 5. Run `make main.wasm` to compile HOL Light to WebAssembly.
 6. Enter the `runtime` directory and run `cargo run --release` to execute the WebAssembly module.
+
+   It takes a while to execute the module because HOL Light is proving all theorems from scratch. You should see the following output:
+
+   ```text
+   Hello, Hol-light-wasm!
+   1 + 1
+   Bye!
+   ```
+
 7. If you want to rebuild the WebAssembly module, run `make clean` first to remove previous build artifacts in case make does not detect changes correctly.
 
 ## License
