@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 rug = "1.29.0"
-wasmtime = { version = "44.0.0", default-features = false, features = [
+wasmtime = { version = "47", default-features = false, features = [
     "runtime",
     "cranelift",
     "cache",
@@ -16,10 +16,10 @@ wasmtime = { version = "44.0.0", default-features = false, features = [
     "coredump",
     "gc",
     "gc-drc",
-], git = "https://github.com/bytecodealliance/wasmtime.git", rev = "0d66dffd619e299eac08ebebefb7a4673641aa28" }
-wasmtime-wasi = { version = "44.0.0", default-features = false, features = [
+] }
+wasmtime-wasi = { version = "47", default-features = false, features = [
     "p1",
-], git = "https://github.com/bytecodealliance/wasmtime.git", rev = "0d66dffd619e299eac08ebebefb7a4673641aa28" }
+] }
 
 # Enable optimizations for dependencies
 [profile.dev.package."*"]

@@ -51,8 +51,8 @@ Alternative approaches to achieving similar outcomes include: modifying the HOL 
 
 Currently, several issues are preventing this project from becoming functional:
 
-- [Bugs](https://github.com/bytecodealliance/wasmtime/issues/11753) in the GC implementation of `wasmtime` cause HOL Light to hang during initialization. Disabling GC in `wasmtime` (by enabling the `gc-null` feature) allows the module to execute further, but it still fails because memory is quickly exhausted without GC.
-- HOL Light’s special module system results in a very large initializer function (over 133k lines in WAT!), which may exceed the size limit for a single function in `cranelift` (the default backend of `wasmtime`) on certain platforms. I have tested this on arm64 macOS, x86_64 Linux, and arm64 Linux, and only x86_64 Linux works.
+- ~~[Bugs](https://github.com/bytecodealliance/wasmtime/issues/11753) in the GC implementation of `wasmtime` cause HOL Light to hang during initialization. Disabling GC in `wasmtime` (by enabling the `gc-null` feature) allows the module to execute further, but it still fails because memory is quickly exhausted without GC.~~ Fixed in `wasmtime` 47.0.0.
+- ~~HOL Light’s special module system results in a very large initializer function (over 133k lines in WAT!), which may exceed the size limit for a single function in `cranelift` (the default backend of `wasmtime`) on certain platforms. I have tested this on arm64 macOS, x86_64 Linux, and arm64 Linux, and only x86_64 Linux works.~~ Fixed in `wasmtime` 47.0.0.
 - Regarding the ultimate goal of checkpointing, `wizer` does not yet support WasmGC. I'm not sure whether this is a theoretical limitation or simply not yet implemented.
 
 ## I want to try it though...
