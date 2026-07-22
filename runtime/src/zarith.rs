@@ -95,13 +95,13 @@ fn to_string(mut store: impl AsContextMut, s: &EqRef) -> Result<String> {
 }
 
 fn from_string(mut store: impl AsContextMut, s: &str) -> Result<Rooted<EqRef>> {
-    let s = s.bytes().map(|b| Val::I32(b as i32)).collect::<Vec<_>>();
+    let bytes = s.bytes().map(|b| Val::I32(b as i32)).collect::<Vec<_>>();
     let array_ty = ArrayType::new(
         store.as_context().engine(),
-        FieldType::new(Mutability::Const, ValType::I32.into()),
+        FieldType::new(Mutability::Var, StorageType::I8),
     );
     let allocator = ArrayRefPre::new(&mut store, array_ty);
-    let array = ArrayRef::new_fixed(&mut store, &allocator, &s)?;
+    let array = ArrayRef::new_fixed(&mut store, &allocator, &bytes)?;
     Ok(array.to_eqref())
 }
 
